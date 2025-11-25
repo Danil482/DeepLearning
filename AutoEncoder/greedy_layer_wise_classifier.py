@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset, random_split
-import torchvision.transforms as transforms
 from PIL import Image
 import os
 import numpy as np
@@ -11,12 +10,13 @@ import matplotlib.pyplot as plt
 
 # Проверка доступности GPU
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 print(f"Using device: {device}")
 
 
 # ==================== 1. ЗАГРУЗКА И ПРЕДОБРАБОТКА ДАННЫХ ====================
 
-def load_images_from_folder(folder_path, label, target_size=(28, 28)):
+def load_images_from_folder(folder_path, label, target_size=(64, 64)):
     """Загрузка изображений из папки и их нормализация"""
     images = []
     labels = []
@@ -39,11 +39,11 @@ def load_images_from_folder(folder_path, label, target_size=(28, 28)):
     return images, labels
 
 
-def load_and_preprocess_data():
+def load_and_preprocess_data(target_size=(64, 64)):
     """Загрузка и предобработка данных"""
     print("Загрузка данных...")
-    yes_images, yes_labels = load_images_from_folder('../DATA/YES/', label=0)
-    no_images, no_labels = load_images_from_folder('../DATA/NO/', label=1)
+    yes_images, yes_labels = load_images_from_folder('../DATA/YES/', label=0, target_size=target_size)
+    no_images, no_labels = load_images_from_folder('../DATA/NO/', label=1, target_size=target_size)
 
     all_images = yes_images + no_images
     all_labels = yes_labels + no_labels
@@ -123,14 +123,14 @@ def create_data_loaders(X, y, batch_size=16, train_ratio=0.8, val_ratio=0.1, tes
 # ==================== 3. ОПРЕДЕЛЕНИЕ АРХИТЕКТУР АВТОЭНКОДЕРОВ ====================
 
 class Autoencoder1(nn.Module):
-    def __init__(self):
+    def __init__(self, target_size):
         super(Autoencoder1, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(784, 100),  # ПРЯМОЙ ПЕРЕХОД 784 -> 100
+            nn.Linear(target_size, 100),  # ПРЯМОЙ ПЕРЕХОД 784 -> 100
             nn.Sigmoid()
         )
         self.decoder = nn.Sequential(
-            nn.Linear(100, 784),  # ПРЯМОЙ ПЕРЕХОД 100 -> 784
+            nn.Linear(100, target_size),  # ПРЯМОЙ ПЕРЕХОД 100 -> 784
             nn.Sigmoid()
         )
 
@@ -141,14 +141,14 @@ class Autoencoder1(nn.Module):
 
 
 class Autoencoder2(nn.Module):
-    def __init__(self):
+    def __init__(self, target_size):
         super(Autoencoder2, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Linear(100, 50),  # ПРЯМОЙ ПЕРЕХОД 100 -> 50
+            nn.Linear(target_size, 50),  # ПРЯМОЙ ПЕРЕХОД 100 -> 50
             nn.Sigmoid()
         )
         self.decoder = nn.Sequential(
-            nn.Linear(50, 100),  # ПРЯМОЙ ПЕРЕХОД 50 -> 100
+            nn.Linear(50, target_size),  # ПРЯМОЙ ПЕРЕХОД 50 -> 100
             nn.Sigmoid()
         )
 
@@ -296,10 +296,11 @@ def main():
         val_ratio=0.1,
         test_ratio=0.1
     )
-
+    target_size1 = 64 * 64
+    target_size2 = 100
     # Создание моделей
-    autoencoder1 = Autoencoder1()
-    autoencoder2 = Autoencoder2()
+    autoencoder1 = Autoencoder1(target_size1)
+    autoencoder2 = Autoencoder2(target_size2)
     classifier = Classifier(hidden_size=16)  # Маленький скрытый слой из-за малого количества данных
 
     print("Архитектура моделей создана")
@@ -417,10 +418,10 @@ def main():
 
     # ==================== 7. СОХРАНЕНИЕ МОДЕЛЕИ ====================
 
-    torch.save(autoencoder1.state_dict(), 'autoencoder1.pth')
-    torch.save(autoencoder2.state_dict(), 'autoencoder2.pth')
-    torch.save(classifier.state_dict(), 'classifier.pth')
-    print("\nМодели сохранены: autoencoder1.pth, autoencoder2.pth, classifier.pth")
+    torch.save(autoencoder1.state_dict(), 'models/autoencoder1.pth')
+    torch.save(autoencoder2.state_dict(), 'models/autoencoder2.pth')
+    torch.save(classifier.state_dict(), 'models/greedy_layer_wise_classifier.pth')
+    print("\nМодели сохранены: autoencoder1.pth, autoencoder2.pth, greedy_layer_wise_classifier.pth")
 
     # ==================== 8. ВИЗУАЛИЗАЦИЯ РЕЗУЛЬТАТОВ ====================
 
@@ -455,7 +456,7 @@ def main():
     plt.grid()
 
     plt.tight_layout()
-    plt.savefig('learning_curves.png')
+    plt.savefig('images/learning_curves.png')
     plt.show()
 
     # Визуализация нескольких примеров реконструкции
@@ -474,26 +475,27 @@ def main():
         restored_100d = autoencoder2.decoder(encoded_50d)  # [B, 100]
         final_reconstructed = autoencoder1.decoder(restored_100d)  # [B, 784]
 
+        image_size = (64, 64)
         # Визуализация
         fig, axes = plt.subplots(3, 5, figsize=(12, 8))
         for i in range(5):
             # Оригинал
-            axes[0, i].imshow(test_samples[i].cpu().view(28, 28), cmap='gray')
+            axes[0, i].imshow(test_samples[i].cpu().view(image_size), cmap='gray')
             axes[0, i].set_title('Original')
             axes[0, i].axis('off')
 
             # Реконструкция после AE1
-            axes[1, i].imshow(reconstructed_100d[i].cpu().view(28, 28), cmap='gray')
+            axes[1, i].imshow(reconstructed_100d[i].cpu().view(image_size), cmap='gray')
             axes[1, i].set_title('After AE1')
             axes[1, i].axis('off')
 
             # Реконструкция после AE2
-            axes[2, i].imshow(final_reconstructed[i].cpu().view(28, 28), cmap='gray')
+            axes[2, i].imshow(final_reconstructed[i].cpu().view(image_size), cmap='gray')
             axes[2, i].set_title('After AE1→AE2→AE1')
             axes[2, i].axis('off')
 
         plt.tight_layout()
-        plt.savefig('reconstruction_examples.png')
+        plt.savefig('images/reconstruction_examples.png')
         plt.show()
 
 
