@@ -52,7 +52,7 @@ class EndToEndClassifier(nn.Module):
 
 # ==================== ОБУЧЕНИЕ ====================
 
-def train_model(model, train_loader, val_loader, num_epochs=200, lr=0.001):
+def train_model(model, train_loader, val_loader, num_epochs=50, lr=0.001):
     model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
@@ -139,7 +139,7 @@ def main():
 
     # Обучение
     train_losses, train_accuracies,val_losses, val_accuracies = train_model(
-        model, train_loader, val_loader, num_epochs=100, lr=0.001
+        model, train_loader, val_loader, num_epochs=50, lr=0.001
     )
 
     # Тестирование
