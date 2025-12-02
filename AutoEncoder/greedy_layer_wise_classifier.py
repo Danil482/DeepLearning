@@ -8,11 +8,6 @@ import numpy as np
 from sklearn.metrics import accuracy_score, classification_report
 import matplotlib.pyplot as plt
 
-# Проверка доступности GPU
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-print(f"Using device: {device}")
-
 
 # ==================== 1. ЗАГРУЗКА И ПРЕДОБРАБОТКА ДАННЫХ ====================
 
@@ -57,7 +52,7 @@ def load_and_preprocess_data(target_size=(64, 64)):
 
 
 # ==================== 2. РАЗДЕЛЕНИЕ НА ТРЕНИРОВОЧНУЮ, ВАЛИДАЦИОННУЮ И ТЕСТОВУЮ ВЫБОРКИ ====================
-def create_data_loaders(X, y, batch_size=16, train_ratio=0.8, val_ratio=0.1, test_ratio=0.1):
+def create_data_loaders(X, y, batch_size=16, train_ratio=0.8, val_ratio=0.1):
     """
     Создает DataLoader'ы для тренировочной, валидационной и тестовой выборок
 
@@ -67,7 +62,6 @@ def create_data_loaders(X, y, batch_size=16, train_ratio=0.8, val_ratio=0.1, tes
         batch_size: размер батча
         train_ratio: доля тренировочных данных
         val_ratio: доля валидационных данных
-        test_ratio: доля тестовых данных
 
     Returns:
         train_loader, val_loader, test_loader: DataLoader'ы для каждой выборки
@@ -178,6 +172,8 @@ class Classifier(nn.Module):
 
 def train_autoencoder(model, train_loader, val_loader, num_epochs=100, model_name="Autoencoder"):
     """Обучение автоэнкодера"""
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
     model.to(device)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -293,8 +289,7 @@ def main():
         X, y,
         batch_size=16,
         train_ratio=0.8,
-        val_ratio=0.1,
-        test_ratio=0.1
+        val_ratio=0.1
     )
     target_size1 = 64 * 64
     target_size2 = 100
