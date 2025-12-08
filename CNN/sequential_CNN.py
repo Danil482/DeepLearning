@@ -25,7 +25,7 @@ def load_and_preprocess_data_cnn(target_size=(64, 64)):
 
 # --------------------- МОДЕЛЬ ---------------------
 class SequentialCNN(nn.Module):
-    def __init__(self, input_size=64, num_channels=32, dropout2d_p=0.1, dropout_p=0.1):
+    def __init__(self, num_channels=32, dropout2d_p=0.1, dropout_p=0.1):
         super(SequentialCNN, self).__init__()
 
         self.features = nn.Sequential(
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {DEVICE}")
 
-    TARGET_SIZE = (128, 128)  # Можно менять на 32, 96, 128 и т.д.
+    TARGET_SIZE = (227, 227)  # Можно менять на 32, 96, 128 и т.д.
 
     # Загружаем и предобрабатываем данные (функции из AutoEncoder)
     X, y = load_and_preprocess_data_cnn(target_size=TARGET_SIZE)
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     print(f"Загружено данных: {len(X)} изображений размером {TARGET_SIZE}")
 
     # Создаём модель
-    model = SequentialCNN(input_size=TARGET_SIZE[0], num_channels=32)
+    model = SequentialCNN(num_channels=32)
     print(model)
     print(f"Общее количество параметров: {sum(p.numel() for p in model.parameters()):,}")
 
