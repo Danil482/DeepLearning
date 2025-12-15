@@ -9,24 +9,27 @@ from AutoEncoder.greedy_layer_wise_classifier import create_data_loaders
 
 
 class ParallelCNN(nn.Module):
-    def __init__(self, channels1=16, channels2=48, dropout_p=0.3):
+    def __init__(self, channels1=16, channels2=48, dropout_p=0.3, kernel1=3, kernel2=5, stride=1):
         super().__init__()
+
+        padding1 = kernel1 // 2
+        padding2 = kernel2 // 2
 
         # === ПЕРВЫЙ ПАРАЛЛЕЛЬНЫЙ БЛОК (маленькое ядро) ===
         self.branch1 = nn.Sequential(
-            nn.Conv2d(1, channels1, kernel_size=3, padding=1, bias=False),
+            nn.Conv2d(1, channels1, kernel_size=kernel1, padding=padding1, bias=False),
             nn.BatchNorm2d(channels1),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),
+            nn.MaxPool2d(2, stride=stride),
             nn.Dropout2d(p=0.1)
         )
 
         # === ВТОРОЙ ПАРАЛЛЕЛЬНЫЙ БЛОК (большое ядро) ===
         self.branch2 = nn.Sequential(
-            nn.Conv2d(1, channels2, kernel_size=5, padding=2, bias=False),
+            nn.Conv2d(1, channels2, kernel_size=kernel2, padding=padding2, bias=False),
             nn.BatchNorm2d(channels2),
             nn.ReLU(inplace=True),
-            nn.MaxPool2d(2),
+            nn.MaxPool2d(2, stride=stride),
             nn.Dropout2d(p=0.1)
         )
 

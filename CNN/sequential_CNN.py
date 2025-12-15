@@ -142,7 +142,7 @@ if __name__ == "__main__":
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {DEVICE}")
 
-    TARGET_SIZE = (227, 227)  # Можно менять на 32, 96, 128 и т.д.
+    TARGET_SIZE = (64, 64)  # Можно менять на 32, 96, 128 и т.д.
 
     # Загружаем и предобрабатываем данные (функции из AutoEncoder)
     X, y = load_and_preprocess_data_cnn(target_size=TARGET_SIZE)
